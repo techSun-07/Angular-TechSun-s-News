@@ -1,0 +1,276 @@
+1) Create App - 
+ng new magazine --skip-tests
+Do you want to enforce stricter type checking and stricter bundle budgets in the workspace?Yes
+Would you like to add Angular routing? Yes
+Which stylesheet format would you like to use? CSS
+
+install packages and generate components and services
+cd magazine 
+npm i ngx-pagination
+npm i bootstrap
+ng g c header
+ng g c footer
+ng g c home 
+ng g c news
+ng g c snews
+ng g c games
+ng g c game
+ng g c movies
+ng g c movie
+ng g c pageNotFound
+ng g s magazine
+
+Download Icon 
+https://iconarchive.com/show/business-economic-icons-by-inipagi/news-icon.html
+Download icofonts 
+https://icofont.com/
+
+2) Project Set up
+A) import required modules [app.modules.ts]
+import {NgxPaginationModule} from 'ngx-pagination';
+import { HttpClientModule } from '@angular/common/http';
+
+B)app.component.html
+<app-header></app-header>
+<div class="container-fluid">
+    <router-outlet></router-outlet>
+</div>
+<app-footer></app-footer>
+
+C)Rounting
+ { path: 'home', component:HomeComponent },  
+  { path: 'news/:topic', component:NewsComponent },
+  { path: 'snews/:query', component:SnewsComponent },
+  { path: 'games/:genre', component:GamesComponent },  
+  { path: 'game/:id', component:GameComponent },
+  { path: 'movies:tag', component:MoviesComponent },  
+  { path: 'movie/:id', component:MovieComponent },
+  { path: '**', component:PageNotFoundComponent },
+
+D)Adding Bootstrap & Icofont 
+"styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "./src/assets/icofont/icofont.min.css",
+            ],
+ "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ]
+E)Change Project Title & Favicon 
+F) Page Not Found Component
+
+
+
+3) Header Component
+Add Bootstrap Navbar Component
+
+ <li class="nav-item" *ngFor="let topic of topics">
+ <a class="nav-link text-capitalize" [routerLink]="['/news',topic]">{{topic}}</a>
+ </li>
+
+topics=['breaking-news', 'business', 'technology', 'entertainment', 'sports', 'science',' health'];
+
+4) News Component
+import { ActivatedRoute } from '@angular/router';
+  t: string;
+  constructor(private route: ActivatedRoute ) { 
+    this.route.params.subscribe(rec=>  this.t=rec.topic );
+}
+
+<div class="bg-info pt-3 pb-3 text-center text-uppercase text-white display-4">
+{{t}}	
+</div>
+<div class="container pt-5 pb-5" style="min-height: 200px;">
+	
+</div>
+
+
+5) Footer Component
+
+6)  Magazine Service 
+import { HttpClient,HttpParams,HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+service class 
+news:string;
+lnews:string;
+NApiKey="ae748dc52aa6a3194563c16c5258016a";
+
+  constructor(private http: HttpClient) {
+  this.news=`https://gnews.io/api/v4/search?lang=en&country=in&token=${this.NApiKey}`
+  this.lnews=`https://gnews.io/api/v4/top-headlines?lang=en&country=in&token=${this.NApiKey}`
+   }
+  
+
+   getLatestNews(): Observable<any>{
+     return this.http.get<any>(this.lnews);}
+
+   getLatestNewsByTopic(topic:string): Observable<any>{
+     let url=`${this.lnews}&topic=${topic}`
+     return this.http.get<any>(url);}
+
+   getNews(query:string): Observable<any>{
+     let url=`${this.news}&q=${query}`
+     return this.http.get<any>(url);}
+
+
+News Component 
+import { MagazineService } from './../magazine.service';
+
+ 
+t: string='';
+ newsData: any = [];
+  p = 1;
+
+ constructor(private route: ActivatedRoute, private mservice : MagazineService ) { 
+    this.route.params.subscribe(
+rec=> {
+      this.t=rec[topic];
+      this.mservice.getLatestNewsByTopic(this.t).subscribe((result:any) => {
+      this.newsData = result.articles;
+     console.log(this.newsData);})
+    });
+}
+
+
+.card-text{text-align: justify;}
+.card-title{font-size: 14px; font-weight: bold;}
+img{height: 300px;}
+
+<div class="row" >
+<div class="col-md-6 mt-3" *ngFor="let n of newsData | paginate: { itemsPerPage: 6, currentPage: p, totalItems: newsData.length}">
+
+<div class="card">
+<img [src]="n.image" class="card-img-top" alt="...">
+<div class="card-body">
+<p class="card-title">{{n.title}} (Source: {{n.source.name}})</p>
+<p class="card-text">{{n.description | slice:0:150}}</p>
+<a [href]="n.url" target="_blank" class="btn btn-dark">Read More</a>
+</div>
+</div>
+
+</div></div>
+</div>
+<div class="row mt-4" >
+<div class="col text-left">
+<pagination-controls (pageChange)="p = $event"
+class='bg-light text-dark w-100 text-center pt-3'></pagination-controls>
+</div>
+</div>
+
+
+
+Home
+.card-text{text-align: justify;}
+.card-title{font-size: 16px; font-weight: bold;}
+img{height: 240px;}
+
+import { MagazineService } from './../magazine.service';
+
+newsData: any = [];
+  p = 1;
+
+  constructor(private mservice : MagazineService ) { 
+      this.mservice.getLatestNews().subscribe((result:any) => {
+      this.newsData = result.articles;})}
+
+
+<div class="bg-info pt-5 pb-5 text-center text-uppercase text-white display-4">
+Top News
+</div>
+<div class="container pt-5 pb-5" style="min-height: 200px;">
+<div class="card mb-3" *ngFor="let n of newsData">
+  <div class="row g-0">
+    <div class="col-md-4">
+      <img [src]="n.image" class="img-fluid rounded-start w-100" alt="...">
+    </div>
+    <div class="col-md-8">
+      <div class="card-body">
+      <p class="card-title">{{n.title}} (Source: {{n.source.name}})</p>
+	  <p class="card-text text-muted">{{n.description | slice:0:150}}</p>
+	  <p class="card-text">{{n.content | slice:0:150}}</p>
+	  <a [href]="n.url" target="_blank" class="btn btn-dark">Read More</a>
+    </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+Header [ Search Form] 
+
+onSubmit(data:any){
+  let q=data.query;
+  this.router.navigate(['/snews/',q]) }
+
+
+      <form class="d-flex" #searchForm="ngForm" (ngSubmit)=onSubmit(searchForm.value)>
+        <input class="form-control me-2" type="search" placeholder="Search" name='query' ngModel required #query="ngModel">
+        <button class="btn btn-outline-info text-white" type="submit" [disabled]="!searchForm.valid">Search</button>
+      </form>
+
+Snews
+
+<div class="bg-info pt-5 pb-5 text-center text-uppercase text-white display-4">
+{{query}}
+</div>
+<div class="container pt-5 pb-5" style="min-height: 200px;">
+<div class="row" >
+<div class="col-md-6 mt-3" *ngFor="let n of newsData | paginate: { itemsPerPage: 6, currentPage: p, totalItems: newsData.length}">
+
+<div class="card">
+<img [src]="n.image" class="card-img-top" alt="...">
+<div class="card-body">
+<p class="card-title">{{n.title}} (Source: {{n.source.name}})</p>
+<p class="card-text">{{n.description | slice:0:150}}</p>
+<a [href]="n.url" target="_blank" class="btn btn-dark">Read More</a>
+</div></div></div></div></div>
+
+<div class="row mt-4" >
+<div class="col text-left">
+<pagination-controls (pageChange)="p = $event"
+class='bg-light text-dark w-100 text-center pt-3'></pagination-controls>
+</div></div>
+
+import { ActivatedRoute } from '@angular/router';
+import { MagazineService } from './../magazine.service';
+
+  query: string='';
+  newsData: any = [];
+  p = 1;
+
+  constructor(private route: ActivatedRoute,private mservice : MagazineService ) { 
+    this.route.params.subscribe(rec=> {
+      this.query=rec[query];
+      this.mservice.getNews(this.query).subscribe((result:any) => {
+      this.newsData = result.articles;})
+    }); }
+
+—----------------------------------------------------------
+Magazine.service
+
+movies:string;
+minfo:string;
+MApiKey='';
+CApiKey='';
+
+  this.movies=`https://api.themoviedb.org/3/movie/`;
+  this.minfo=`https://imdb-api.com/en/API`;
+
+  getMovies(tag:string): Observable<any>{
+    let movieUrl=`${this.movies}${tag}?api_key=${this.MApiKey}&language=hi-IN&region=IN`;
+     return this.http.get<any>(movieUrl);
+   }
+     getMovie(id:number): Observable<any>{
+      let movieUrl=`${this.movies}${id}?api_key=${this.MApiKey}&language=hi-IN`;
+      return this.http.get<any>(movieUrl);
+   }
+   getCast(id:string): Observable<any>{
+      let castUrl=`${this.minfo}/FullCast/${this.CApiKey}/${id}`;
+      return this.http.get<any>(castUrl);
+   }
+
+
+
+
+
+
